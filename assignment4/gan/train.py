@@ -44,7 +44,8 @@ def train(
             real_images = preprocess_img(x).to(device)
             logits_real = D(real_images)
             
-            g_fake_seed = sample_noise(batch_size, noise_size, device=device)
+            g_fake_seed = sample_noise(batch_size, noise_size)
+            g_fake_seed = g_fake_seed.to(device)
             fake_images = G(g_fake_seed).detach()
             logits_fake = D(fake_images)
             
