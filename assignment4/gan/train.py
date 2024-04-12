@@ -55,7 +55,7 @@ def train(
             
             # Generator step
             G_solver.zero_grad()
-            g_fake_seed = sample_noise(batch_size, noise_size, device=device)
+            g_fake_seed = sample_noise(batch_size, noise_size)
             g_fake_seed = g_fake_seed.to(device)
             fake_images = G(g_fake_seed)
             
