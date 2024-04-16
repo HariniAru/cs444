@@ -4,13 +4,13 @@ import matplotlib.gridspec as gridspec
 
 from gan.utils import sample_noise, show_images, deprocess_img, preprocess_img
 
-
-def generate_fake_images(generator, batch_size, input_channels, img_size, noise_size, device):
+def generate_fake_images(generator, batch_size, noise_size, device):
     noises = sample_noise(batch_size, noise_size).to(device)
-    noises = noises.view(batch_size, noise_size, 1, 1)
+    # Correctly reshape the noise to match the generator's input expectations.
+    noises = noises.view(batch_size, noise_size)  # Remove the spatial dimensions
     fake_images = generator(noises)
-
     return fake_images
+
 
 
 def train(D, G, D_solver, G_solver, discriminator_loss, generator_loss, show_every=250,
@@ -75,7 +75,7 @@ def train(D, G, D_solver, G_solver, discriminator_loss, generator_loss, show_eve
                 p.data.clamp_(-0.01, 0.01)
 
             # Train the discriminator
-            fake_images = generate_fake_images(G, batch_size, input_channels, img_size, noise_size, device).detach()
+            fake_images = generate_fake_images(G, batch_size, noise_size, device)
             score_real = D(real_images)
             score_fake = D(fake_images)
 
@@ -85,7 +85,7 @@ def train(D, G, D_solver, G_solver, discriminator_loss, generator_loss, show_eve
             D_solver.step()
 
             # Train the generator
-            fake_images = generate_fake_images(G, batch_size, input_channels, img_size, noise_size, device)
+            fake_images = generate_fake_images(G, batch_size, noise_size, device)
             score_fake = D(fake_images)
             g_error = generator_loss(score_fake)
 
