@@ -24,7 +24,7 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, x):
-        return self.model(x) 
+        return self.main(x) 
 
 class Generator(nn.Module):
     def __init__(self, noise_dim, output_channels=3):
@@ -54,5 +54,5 @@ class Generator(nn.Module):
         )
 
     def forward(self, x):
-        return self.model(x) 
+        return self.main(x) 
 
