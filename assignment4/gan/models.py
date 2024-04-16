@@ -32,7 +32,7 @@ class Generator(nn.Module):
     def __init__(self, noise_dim, output_channels=3):
         super(Generator, self).__init__()
         self.noise_dim = noise_dim
-        # self.output_channels = output_channels
+        self.output_channels = output_channels
         self.main = nn.Sequential(
             
             nn.ConvTranspose2d(self.noise_dim, 1024, 4, 1, 0),
