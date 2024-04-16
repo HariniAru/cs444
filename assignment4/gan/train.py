@@ -59,21 +59,23 @@ def train(D, G, D_solver, G_solver, discriminator_loss, generator_loss, show_eve
             #          YOUR CODE HERE          #
             ####################################
             D_solver.zero_grad()
-            noise = sample_noise(batch_size, noise_size).reshape((batch_size, noise_size, 1, 1)).cuda()
-            fake_images = G(noise).cuda().detach()
+            noise = sample_noise(batch_size, noise_size).to(device)
+            fake_images = G(noise)  # Remove the reshaping to 4D and ensure it's on the right device
             logits_fake = D(fake_images)
             logits_real = D(real_images)
             d_error = discriminator_loss(logits_real, logits_fake)
             d_error.backward()
             D_solver.step()
-                        
+                                
             G_solver.zero_grad()
-            noise = sample_noise(batch_size, noise_size).reshape((batch_size, noise_size, 1, 1)).cuda()
-            fake_images = G(noise).cuda()
+            # Sample noise again for the generator step
+            noise = sample_noise(batch_size, noise_size).to(device)
+            fake_images = G(noise)
             logits_fake = D(fake_images)
             g_error = generator_loss(logits_fake)
             g_error.backward()
             G_solver.step()
+
             ##########       END      ##########
             
             # Logging and output visualization
