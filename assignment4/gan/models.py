@@ -40,19 +40,19 @@ class Generator(nn.Module):
             # input is Z, going into a convolution
             nn.ConvTranspose2d(self.noise_dim, 512, 4, 1, 0, bias=False),
             nn.BatchNorm2d(512),
-            nn.ReLU(True),
+            nn.ReLU(),
             # state size. 512 x 4 x 4
             nn.ConvTranspose2d(512, 256, 4, 2, 1, bias=False),
             nn.BatchNorm2d(256),
-            nn.ReLU(True),
+            nn.ReLU(),
             # state size. 256 x 8 x 8
             nn.ConvTranspose2d(256, 128, 4, 2, 1, bias=False),
             nn.BatchNorm2d(128),
-            nn.ReLU(True),
+            nn.ReLU(),
             # state size. 128 x 16 x 16
             nn.ConvTranspose2d(128, 64, 4, 2, 1, bias=False),
             nn.BatchNorm2d(64),
-            nn.ReLU(True),
+            nn.ReLU(),
             # state size. 64 x 32 x 32
             nn.ConvTranspose2d(64, self.output_channels, 4, 2, 1, bias=False),
             nn.Tanh()
