@@ -30,12 +30,15 @@ class Discriminator(nn.Module):
         x = self.main(x)
         return x.view(-1, 1).squeeze(1)
 
+
 class Generator(nn.Module):
     def __init__(self, noise_dim, output_channels=3):
         super(Generator, self).__init__()
+        self.noise_dim = noise_dim
+        self.output_channels = output_channels
         self.main = nn.Sequential(
             # input is Z, going into a convolution
-            nn.ConvTranspose2d(noise_dim, 512, 4, 1, 0, bias=False),
+            nn.ConvTranspose2d(self.noise_dim, 512, 4, 1, 0, bias=False),
             nn.BatchNorm2d(512),
             nn.ReLU(True),
             # state size. 512 x 4 x 4
@@ -51,12 +54,14 @@ class Generator(nn.Module):
             nn.BatchNorm2d(64),
             nn.ReLU(True),
             # state size. 64 x 32 x 32
-            nn.ConvTranspose2d(64, output_channels, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(64, self.output_channels, 4, 2, 1, bias=False),
             nn.Tanh()
             # state size. (output_channels) x 64 x 64
         )
 
     def forward(self, x):
-        x = x.view(batch_size, num_feature_maps, 1, 1)  # Reshape from [batch_size, 100] to [batch_size, num_feature_maps, 1, 1]
+        batch_size = x.size(0)
+        x = x.view(batch_size, self.noise_dim, 1, 1)  # Reshape from [batch_size, noise_dim] to [batch_size, noise_dim, 1, 1]
         x = self.main(x)  # Pass through the generator network
         return x
+
