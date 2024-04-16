@@ -3,31 +3,25 @@ import matplotlib.gridspec as gridspec
 
 from gan.utils import sample_noise, show_images, deprocess_img, preprocess_img
 
-def train(D, G, D_solver, G_solver, discriminator_loss, generator_loss, show_every=250, 
-              batch_size=128, noise_size=100, num_epochs=10, train_loader=None, device=None):
+def train(
+    D,
+    G,
+    D_solver,
+    G_solver,
+    discriminator_loss,
+    generator_loss,
+    show_every=250,
+    batch_size=128,
+    noise_size=100,
+    num_epochs=10,
+    train_loader=None,
+    device=None,
+):
     """
     Train loop for GAN.
-    
+
     The loop will consist of two steps: a discriminator step and a generator step.
-    
-    (1) In the discriminator step, you should zero gradients in the discriminator 
-    and sample noise to generate a fake data batch using the generator. Calculate 
-    the discriminator output for real and fake data, and use the output to compute
-    discriminator loss. Call backward() on the loss output and take an optimizer
-    step for the discriminator.
-    
-    (2) For the generator step, you should once again zero gradients in the generator
-    and sample noise to generate a fake data batch. Get the discriminator output
-    for the fake data batch and use this to compute the generator loss. Once again
-    call backward() on the loss and take an optimizer step.
-    
-    You will need to reshape the fake image tensor outputted by the generator to 
-    be dimensions (batch_size x input_channels x img_size x img_size).
-    
-    Use the sample_noise function to sample random noise, and the discriminator_loss
-    and generator_loss functions for their respective loss computations.
-    
-    
+
     Inputs:
     - D, G: PyTorch models for the discriminator and generator
     - D_solver, G_solver: torch.optim Optimizers to use for training the
@@ -43,47 +37,38 @@ def train(D, G, D_solver, G_solver, discriminator_loss, generator_loss, show_eve
     """
     iter_count = 0
     for epoch in range(num_epochs):
-        print('EPOCH: ', (epoch+1))
+        print("EPOCH: ", (epoch + 1))
         for x, _ in train_loader:
             _, input_channels, img_size, _ = x.shape
-            
-            real_images = preprocess_img(x).to(device)  # normalize
-            
-            # Store discriminator loss output, generator loss output, and fake image output
-            # in these variables for logging and visualization below
-            d_error = None
-            g_error = None
-            fake_images = None
-            
-            ####################################
-            #          YOUR CODE HERE          #
-            ####################################
-            D_solver.zero_grad()
+            real_images = preprocess_img(x).to(device)
+
+            # Discriminator step
+            D.zero_grad()
             noise = sample_noise(batch_size, noise_size).to(device)
-            fake_images = G(noise)  # Remove the reshaping to 4D and ensure it's on the right device
-            logits_fake = D(fake_images)
+            fake_images = G(noise).view(batch_size, input_channels, img_size, img_size)
             logits_real = D(real_images)
+            logits_fake = D(fake_images.detach())  # Detach to avoid training G on these gradients
+
             d_error = discriminator_loss(logits_real, logits_fake)
             d_error.backward()
             D_solver.step()
-                                
-            G_solver.zero_grad()
-            # Sample noise again for the generator step
-            noise = sample_noise(batch_size, noise_size).to(device)
-            fake_images = G(noise)
+
+            # Generator step
+            G.zero_grad()
             logits_fake = D(fake_images)
             g_error = generator_loss(logits_fake)
             g_error.backward()
             G_solver.step()
 
-            ##########       END      ##########
-            
             # Logging and output visualization
-            if (iter_count % show_every == 0):
-                print('Iter: {}, D: {:.4}, G:{:.4}'.format(iter_count,d_error.item(),g_error.item()))
-                disp_fake_images = deprocess_img(fake_images.data)  # denormalize
-                imgs_numpy = (disp_fake_images).cpu().numpy()
-                show_images(imgs_numpy[0:16], color=input_channels!=1)
+            if iter_count % show_every == 0:
+                print(
+                    "Iter: {}, D: {:.4}, G:{:.4}".format(
+                        iter_count, d_error.item(), g_error.item()
+                    )
+                )
+                disp_fake_images = deprocess_img(fake_images.data)
+                imgs_numpy = disp_fake_images.cpu().numpy()
+                show_images(imgs_numpy[0:16], color=input_channels != 1)
                 plt.show()
-                print()
             iter_count += 1
