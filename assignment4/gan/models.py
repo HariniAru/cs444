@@ -24,35 +24,39 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, x):
-        return self.main(x) 
-
+        # return self.main(x) 
+        x = self.main(x)
+        return x.view(-1)
+        
 class Generator(nn.Module):
     def __init__(self, noise_dim, output_channels=3):
         super(Generator, self).__init__()
         self.noise_dim = noise_dim
-        self.output_channels = output_channels
+        # self.output_channels = output_channels
         self.main = nn.Sequential(
             
             nn.ConvTranspose2d(self.noise_dim, 1024, 4, 1, 0),
             nn.BatchNorm2d(1024),
-            nn.ReLU(),
+            nn.ReLU(True),
             
             nn.ConvTranspose2d(1024, 512, 4, 2, 1),
             nn.BatchNorm2d(512),
-            nn.ReLU(),
+            nn.ReLU(True),
             
             nn.ConvTranspose2d(512, 256, 4, 2, 1),
             nn.BatchNorm2d(256),
-            nn.ReLU(),
+            nn.ReLU(True),
             
             nn.ConvTranspose2d(256, 128, 4, 2, 1),
             nn.BatchNorm2d(128),
-            nn.ReLU(),
+            nn.ReLU(True),
             
             nn.ConvTranspose2d(128, self.output_channels, 4, 2, 1),
             nn.Tanh()
         )
 
     def forward(self, x):
-        return self.main(x) 
+        x = x.view(-1, self.noise_dim, 1, 1)
+        x = self.main(x)
+        return x
 
