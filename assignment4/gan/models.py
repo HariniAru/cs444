@@ -1,74 +1,72 @@
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
+import torch
+from gan.spectral_normalization import SpectralNorm
+import torch.nn as nn
+import torch.nn.functional as F
 
-from gan.utils import sample_noise, show_images, deprocess_img, preprocess_img
+class Discriminator(torch.nn.Module):
+    def __init__(self, input_channels=3):
+        super(Discriminator, self).__init__()
+        
+        #Hint: Hint: Apply spectral normalization to convolutional layers. Input to SpectralNorm should be your conv nn module
+        ####################################
+        #          YOUR CODE HERE          #
+        ####################################
+        self.conv1 = SpectralNorm(nn.Conv2d(3, 128, kernel_size = 4, stride = 2, padding = 1))
+        self.conv2 = SpectralNorm(nn.Conv2d(128, 256, kernel_size = 4, stride = 2, padding = 1))
+        self.bn1 = nn.BatchNorm2d(256)
+        self.conv3 = SpectralNorm(nn.Conv2d(256, 512, kernel_size = 4, stride = 2, padding = 1))
+        self.bn2 = nn.BatchNorm2d(512)
+        self.conv4 = SpectralNorm(nn.Conv2d(512, 1024, kernel_size = 4, stride = 2, padding = 1))
+        self.bn3 = nn.BatchNorm2d(1024)
+        self.conv5 = SpectralNorm(nn.Conv2d(1024, 1, kernel_size = 4, stride = 1, padding = 1))
+        self.leaky_relu = nn.LeakyReLU(0.2)
+        ##########       END      ##########
+    
+    def forward(self, x):
+        
+        ####################################
+        #          YOUR CODE HERE          #
+        ####################################
+        x = self.leaky_relu(self.conv1(x))
+        x = self.leaky_relu(self.bn1(self.conv2(x)))
+        x = self.leaky_relu(self.bn2(self.conv3(x)))
+        x = self.leaky_relu(self.bn3(self.conv4(x)))
+        x = self.conv5(x)
+        ##########       END      ##########
+        
+        return x
 
-def train(
-    D,
-    G,
-    D_solver,
-    G_solver,
-    discriminator_loss,
-    generator_loss,
-    show_every=250,
-    batch_size=128,
-    noise_size=100,
-    num_epochs=10,
-    train_loader=None,
-    device=None,
-):
-    """
-    Train loop for GAN.
 
-    The loop will consist of two steps: a discriminator step and a generator step.
-
-    Inputs:
-    - D, G: PyTorch models for the discriminator and generator
-    - D_solver, G_solver: torch.optim Optimizers to use for training the
-      discriminator and generator.
-    - discriminator_loss, generator_loss: Functions to use for computing the generator and
-      discriminator loss, respectively.
-    - show_every: Show samples after every show_every iterations.
-    - batch_size: Batch size to use for training.
-    - noise_size: Dimension of the noise to use as input to the generator.
-    - num_epochs: Number of epochs over the training dataset to use for training.
-    - train_loader: image dataloader
-    - device: PyTorch device
-    """
-    iter_count = 0
-    for epoch in range(num_epochs):
-        print("EPOCH: ", (epoch + 1))
-        for x, _ in train_loader:
-            _, input_channels, img_size, _ = x.shape
-            real_images = preprocess_img(x).to(device)
-
-            # Discriminator step
-            D.zero_grad()
-            noise = sample_noise(batch_size, noise_size).to(device)
-            fake_images = G(noise).view(batch_size, input_channels, img_size, img_size)
-            logits_real = D(real_images)
-            logits_fake = D(fake_images.detach())  # Detach to avoid training G on these gradients
-
-            d_error = discriminator_loss(logits_real, logits_fake)
-            d_error.backward()
-            D_solver.step()
-
-            # Generator step
-            G.zero_grad()
-            logits_fake = D(fake_images)
-            g_error = generator_loss(logits_fake)
-            g_error.backward()
-            G_solver.step()
-
-            # Logging and output visualization
-            if iter_count % show_every == 0:
-                print(
-                    "Iter: {}, D: {:.4}, G:{:.4}".format(
-                        iter_count, d_error.item(), g_error.item()
-                    )
-                )
-                disp_fake_images = deprocess_img(fake_images.data)
-                imgs_numpy = disp_fake_images.cpu().numpy()
-                show_images(imgs_numpy[0:16], color=input_channels != 1)
-                plt.show()
-            iter_count += 1
+class Generator(torch.nn.Module):
+    def __init__(self, noise_dim, output_channels=3):
+        super(Generator, self).__init__()    
+        self.noise_dim = noise_dim
+        
+        ####################################
+        #          YOUR CODE HERE          #
+        ####################################
+        self.conv1 = nn.ConvTranspose2d(self.noise_dim, 1024, kernel_size = 4, stride = 1)
+        self.bn1 = nn.BatchNorm2d(1024)
+        self.conv2 = nn.ConvTranspose2d(1024, 512, kernel_size = 4, stride = 2, padding = 1)
+        self.bn2 = nn.BatchNorm2d(512)
+        self.conv3 = nn.ConvTranspose2d(512, 256, kernel_size = 4, stride = 2, padding = 1)
+        self.bn3 = nn.BatchNorm2d(256)
+        self.conv4 = nn.ConvTranspose2d(256, 128, kernel_size = 4, stride = 2, padding = 1)
+        self.bn4 = nn.BatchNorm2d(128)
+        self.conv5 = nn.ConvTranspose2d(128, 3, kernel_size = 4, stride = 2, padding = 1)
+        ##########       END      ##########
+    
+    def forward(self, x):
+        
+        ####################################
+        #          YOUR CODE HERE          #
+        ####################################
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = F.relu(self.bn4(self.conv4(x)))
+        x = torch.tanh(self.conv5(x))
+        ##########       END      ##########
+        
+        return x
+    
