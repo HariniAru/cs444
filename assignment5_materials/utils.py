@@ -5,7 +5,7 @@ from config import *
 
 def find_max_lives(env):
     env.reset()
-    _, _, _, info = env.step(0)
+    _, _, _, _, info = env.step(0)
     return info['lives']
 
 def check_live(life, cur_life):
