@@ -171,7 +171,7 @@ class Agent():
         dones = mini_batch[3] # (batch_size)
 
         # non-terminal mask [False, True] -> [1, 0]
-        mask = torch.tensor(list(map(int, dones==False)), dtype=torch.uint8).cuda().to(device) # (batch_size)
+        mask = torch.tensor(list(map(int, dones==False)), dtype=torch.uint8).to(device) # (batch_size)
 
         # Compute Q(s_t, a), the Q-value of the current state
         ### CODE ####
@@ -256,7 +256,7 @@ class LSTM_Agent(Agent):
 
         # checks if the game is over
         dones = mini_batch[3] # (batch_size)
-        mask = torch.tensor(list(map(int, dones==False)), dtype=torch.uint8).cuda().to(device) # (batch_size)
+        mask = torch.tensor(list(map(int, dones==False)), dtype=torch.uint8).to(device) # (batch_size)
 
         ### All the following code is nearly same as that for Agent
 
