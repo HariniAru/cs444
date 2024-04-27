@@ -7,7 +7,7 @@ import random
 class ReplayMemory(object):
     def __init__(self):
         self.memory = deque(maxlen=Memory_capacity)
-
+    
     def push(self, history, action, reward, done):
         self.memory.append((history, action, reward, done))
 
@@ -27,7 +27,7 @@ class ReplayMemory(object):
             for j in range(HISTORY_SIZE + 1):
                 sample.append(self.memory[i + j])
 
-            sample = np.array(sample) # (HISTORY_SIZE + 1, 4)
+            sample = np.array(sample, dtype=object)
             mini_batch.append((np.stack(sample[:, 0], axis=0), sample[3, 1], sample[3, 2], sample[3, 3]))
 
         return mini_batch
@@ -37,6 +37,15 @@ class ReplayMemory(object):
 
 
 class ReplayMemoryLSTM(ReplayMemory):
+    """
+    This is a version of Replay Memory modified for LSTMs. 
+    Replay memory generally stores (state, action, reward, next state).
+    But LSTMs need sequential data. 
+    So we store (state, action, reward, next state) for previous few states, constituting a trajectory.
+    During training, the previous states will be used to generate the current state of LSTM. 
+    Note that samples from previous episode might get included in the trajectory.
+    Inspite of not being fully correct, this simple Replay Buffer performs well.
+    """
     def __init__(self):
         super().__init__()
 
@@ -55,7 +64,7 @@ class ReplayMemoryLSTM(ReplayMemory):
             for j in range(lstm_seq_length + 1):
                 sample.append(self.memory[i + j])
 
-            sample = np.array(sample)
+            sample = np.array(sample, dtype=object)
             mini_batch.append((np.stack(sample[:, 0], axis=0), sample[lstm_seq_length - 1, 1], sample[lstm_seq_length - 1, 2], sample[lstm_seq_length - 1, 3]))
 
         return mini_batch
