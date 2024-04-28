@@ -165,21 +165,33 @@ class Agent():
         mask = torch.tensor(list(map(int, dones == False)), dtype=torch.uint8).cuda()
 
         # Compute Q(s_t, a), the Q-value of the current state
-        state_action_values = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+        curr_state_actions: Tensor = self.policy_net(states) # (batch_size, action_size)
+        curr_state_values = curr_state_actions.gather(1, actions.unsqueeze(1)).squeeze(1) # (batch_size)
+
+        # Compute argmax_a' Q_wi(s_t+1, a')
+        next_actions = self.policy_net(next_states).max(1)[1] # (batch_size)
 
         # Compute Q function of next state
-        next_state_values = self.target_net(next_states).max(1)[0]
-        next_state_values = next_state_values.detach()  # detach to stop gradient backpropagation to target net
+        next_state_actions: Tensor = self.target_net(next_states).detach() # (batch_size, action_size)
 
-        # Compute expected Q values
-        expected_state_action_values = rewards + (self.discount_factor * next_state_values * mask)
+        # Find Q-value of action at next state from target net
+        next_state_values = next_state_actions.gather(1, next_actions.unsqueeze(1)).squeeze(1) * mask.float() # (batch_size)
+        next_state_values = next_state_values
+
+        # Compute the expected Q-value
+        expected_state_values = next_state_values * self.discount_factor + rewards
 
         # Compute the Huber Loss
-        loss = F.smooth_l1_loss(state_action_values, expected_state_action_values)
+        criterion = nn.SmoothL1Loss()
+        loss = criterion(expected_state_values, curr_state_values)
 
-        # Optimize the model
+        # Optimize the model, .step() both the optimizer and the scheduler!
+        ### CODE ####
         self.optimizer.zero_grad()
         loss.backward()
+
+        # for param in self.policy_net.parameters():
+        #     param.grad.data.clamp_(-1, 1)
+
         self.optimizer.step()
         self.scheduler.step()
-
