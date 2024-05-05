@@ -221,7 +221,7 @@ class Agent():
         next_q_values = self.policy_net(next_states).detach().gather(1, next_q_actions.unsqueeze(1))
 
         # Compute Q function of next state using target net
-        target_q_values = self.policy_net_target(next_states).detach()
+        target_q_values = self.target_net(next_states).detach()
         next_q = target_q_values.gather(1, next_q_actions.unsqueeze(1)).squeeze()
 
         # Compute the target Q value
