@@ -216,7 +216,7 @@ class Agent():
         current_q = self.policy_net(states).gather(1, actions.unsqueeze(1))
 
         # Compute Q function of next state using policy net
-        next_states = torch.FloatTensor(next_states).to(device)
+        # next_states = torch.FloatTensor(next_states).to(device)
         next_q_actions = self.policy_net(next_states).argmax(dim=1)
         next_q_values = self.policy_net(next_states).detach().gather(1, next_q_actions.unsqueeze(1))
 
