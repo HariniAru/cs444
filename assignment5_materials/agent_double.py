@@ -110,7 +110,7 @@ class Agent():
         loss = F.smooth_l1_loss(state_action_values, expected_state_action_values)
 
         # Gradient clipping
-        torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 10.0) 
+        # torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 10.0) 
     
         # Optimize the model
         self.optimizer.zero_grad()
