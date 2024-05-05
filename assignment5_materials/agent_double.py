@@ -72,10 +72,10 @@ class Agent():
     def train_policy_net(self, frame):
         if self.epsilon > self.epsilon_min:
             self.epsilon -= self.epsilon_decay
-
+    
         mini_batch = self.memory.sample_mini_batch(frame)
         mini_batch = np.array(mini_batch, dtype=object).transpose()
-
+    
         history = np.stack(mini_batch[0], axis=0)
         states = np.float32(history[:, :4, :, :]) / 255.
         states = torch.from_numpy(states).cuda()
@@ -84,8 +84,33 @@ class Agent():
         rewards = list(mini_batch[2])
         rewards = torch.FloatTensor(rewards).cuda()
         next_states = np.float32(history[:, 1:, :, :]) / 255.
-        dones = mini_batch[3] # checks if the game is over
-        musk = torch.tensor(list(map(int, dones==False)),dtype=torch.uint8)
-        
+        next_states = torch.from_numpy(next_states).cuda()
+        dones = mini_batch[3]
+        mask = torch.tensor(list(map(int, dones == False)), dtype=torch.uint8).cuda()
+
         # Your agent.py code here with double DQN modifications
-        ### CODE ###
+        ### CODE ###"
+
+        # Compute Q(s_t, a), the Q-value of the current state
+        state_action_values = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+    
+        # Use the policy net to select the best action to take for the next states (argmax of Q values)
+        next_actions = self.policy_net(next_states).max(1)[1]
+    
+        # Use the target net to calculate the Q values for the next states and selected actions by policy net
+        next_state_values = self.target_net(next_states).gather(1, next_actions.unsqueeze(1)).squeeze(1)
+    
+        # Find maximum Q-value of action at next state from target net
+        next_state_values = next_state_values.detach()  # detach to stop gradient backpropagation to target net
+    
+        # Compute expected Q values
+        expected_state_action_values = rewards + (self.discount_factor * next_state_values * mask)
+    
+        # Compute the Huber Loss
+        loss = F.smooth_l1_loss(state_action_values, expected_state_action_values)
+    
+        # Optimize the model
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        self.scheduler.step()
