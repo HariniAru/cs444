@@ -7,7 +7,7 @@ learning_rate = 0.0001
 evaluation_reward_length = 100
 Memory_capacity = 1000000
 train_frame = 100000 # You can set it to a lower value while testing your code so you don't have to wait longer to see if the training code does not have any syntax errors
-batch_size = 128
+batch_size = 32
 scheduler_gamma = 0.4
 scheduler_step_size = 100000
 
