@@ -109,7 +109,7 @@ class Agent():
         
         # Compute the target Q value
         ### CODE ####
-        target_q = rewards + (self.discount_factor * next_state_values * mask)
+        target_q = (self.discount_factor * next_state_values * mask) + rewards
         # https://stackoverflow.com/questions/56075838/how-to-generate-the-values-for-the-q-function
         
         # Compute the Huber Loss
