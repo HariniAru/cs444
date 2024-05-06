@@ -52,7 +52,6 @@ class Agent():
         self.target_net.load_state_dict(self.policy_net.state_dict())
         # pass
 
-
     """Get action using policy net using epsilon-greedy policy"""
     def get_action(self, state): # same from agent.py
         if np.random.rand() <= self.epsilon:
