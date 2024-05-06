@@ -43,7 +43,6 @@ class Agent():
         self.target_net.to(device)
         self.update_target_net()
 
-
     def load_policy_net(self, path):
         self.policy_net = torch.load(path)           
 
